@@ -7,9 +7,9 @@
     "server"
   ],
   "scripts": {
+    "start": "tsx src/index.ts",
     "dev": "npm run dev --workspace=client",
     "dev:server": "npm run dev --workspace=server",
-    "build": "npm run build --workspace=client",
-    "start": "npm run start --workspace=client"
+    "build": "npm run build --workspace=client"
   }
 }
