@@ -1,0 +1,407 @@
+# Custom MCP — Simple Node.js Project + Cursor Setup
+
+## Goal
+
+Build a small custom MCP server as a Node.js/TypeScript application and connect it to Cursor.
+
+The basic flow is:
+
+    Cursor
+       |
+       | MCP
+       v
+    My Node.js MCP application
+       |
+       v
+    My custom tools / APIs
+
+---
+
+# 1. Create a Node.js project
+
+Create a folder:
+
+    mkdir my-custom-mcp
+    cd my-custom-mcp
+
+Initialize Node.js:
+
+    npm init -y
+
+---
+
+# 2. Install MCP dependencies
+
+Install:
+
+    npm install @modelcontextprotocol/server zod
+
+Install development dependencies:
+
+    npm install -D typescript tsx @types/node
+
+---
+
+# 3. Create the project structure
+
+Create:
+
+    my-custom-mcp/
+    |
+    +-- src/
+    |   |
+    |   +-- index.ts
+    |
+    +-- package.json
+    +-- tsconfig.json
+
+---
+
+# 4. Create tsconfig.json
+
+Add:
+
+    {
+      "compilerOptions": {
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true
+      },
+      "include": ["src"]
+    }
+
+---
+
+# 5. Create the MCP server
+
+Create:
+
+    src/index.ts
+
+Add:
+
+    import { McpServer } from "@modelcontextprotocol/server";
+    import { serveStdio } from "@modelcontextprotocol/server/stdio";
+    import * as z from "zod/v4";
+
+    const server = new McpServer({
+      name: "my-custom-mcp",
+      version: "1.0.0",
+    });
+
+    server.registerTool(
+      "hello",
+      {
+        description: "A simple hello tool",
+        inputSchema: z.object({
+          name: z.string(),
+        }),
+      },
+      async ({ name }) => {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Hello ${name}!`,
+            },
+          ],
+        };
+      }
+    );
+
+    serveStdio(() => server);
+
+---
+
+# 6. Add the start command
+
+In package.json:
+
+    "scripts": {
+      "start": "tsx src/index.ts"
+    }
+
+Your package.json can look like:
+
+    {
+      "name": "my-custom-mcp",
+      "version": "1.0.0",
+      "scripts": {
+        "start": "tsx src/index.ts"
+      }
+    }
+
+---
+
+# 7. Test the Node.js application
+
+Run:
+
+    npm run start
+
+You may not see anything in the terminal.
+
+That is normal.
+
+The MCP server is waiting for an MCP client such as Cursor to connect to it.
+
+For a local stdio MCP, you normally do not open it in a browser.
+
+---
+
+# 8. Connect the project to Cursor
+
+This is the main manual connection step.
+
+Cursor needs to know:
+
+- where the MCP application is
+- how to start it
+
+Open Cursor's MCP configuration:
+
+    %USERPROFILE%\.cursor\mcp.json
+
+On Windows this is normally:
+
+    C:\Users\<YOUR_USERNAME>\.cursor\mcp.json
+
+Add:
+
+    {
+      "mcpServers": {
+        "my-custom-mcp": {
+          "command": "npx",
+          "args": [
+            "tsx",
+            "C:\\path\\to\\my-custom-mcp\\src\\index.ts"
+          ]
+        }
+      }
+    }
+
+Replace:
+
+    C:\\path\\to\\my-custom-mcp\\src\\index.ts
+
+with the actual path of your Node.js project.
+
+For example:
+
+    {
+      "mcpServers": {
+        "my-custom-mcp": {
+          "command": "npx",
+          "args": [
+            "tsx",
+            "C:\\Users\\Manju\\Desktop\\my-custom-mcp\\src\\index.ts"
+          ]
+        }
+      }
+    }
+
+If you already have other MCP servers in mcp.json, do not delete them. Add your server next to them.
+
+---
+
+# 9. Do I need to run the MCP manually?
+
+No, not every time.
+
+Once Cursor has this configuration:
+
+    "command": "npx"
+
+and:
+
+    "args": [
+      "tsx",
+      "C:\\path\\to\\src\\index.ts"
+    ]
+
+Cursor can start the MCP application itself.
+
+So the normal workflow is:
+
+    Open Cursor
+         |
+         v
+    Cursor reads mcp.json
+         |
+         v
+    Cursor starts your Node.js MCP
+         |
+         v
+    Cursor discovers your tools
+         |
+         v
+    You use the tools in Cursor Agent
+
+You only need to run `npm run start` manually when you want to test or debug the application yourself.
+
+---
+
+# 10. Check it in Cursor
+
+Go to:
+
+    Cursor
+      -> Settings
+      -> Tools & MCPs
+
+Find:
+
+    my-custom-mcp
+
+You should see something similar to:
+
+    my-custom-mcp
+    1 tool enabled
+
+The tool should be:
+
+    hello
+
+---
+
+# 11. Use the custom MCP in Cursor
+
+Open Cursor Agent.
+
+Ask:
+
+    Use my custom MCP and say hello to Manju.
+
+Cursor can call:
+
+    hello
+
+with:
+
+    {
+      "name": "Manju"
+    }
+
+The MCP returns:
+
+    Hello Manju!
+
+---
+
+# 12. Add more custom tools
+
+The important part of the Node.js application is:
+
+    server.registerTool(...)
+
+For example, you can add:
+
+    search_users
+    get_user
+    search_contentful
+    get_contentful_entry
+    search_jira
+    get_jira_ticket
+
+Example:
+
+    server.registerTool(
+      "add",
+      {
+        description: "Add two numbers",
+        inputSchema: z.object({
+          a: z.number(),
+          b: z.number(),
+        }),
+      },
+      async ({ a, b }) => {
+        return {
+          content: [
+            {
+              type: "text",
+              text: String(a + b),
+            },
+          ],
+        };
+      }
+    );
+
+Now Cursor can call:
+
+    add
+
+with:
+
+    {
+      "a": 10,
+      "b": 20
+    }
+
+and receive:
+
+    30
+
+---
+
+# 13. What you actually build manually
+
+The custom MCP itself is just your Node.js application.
+
+You manually create:
+
+    1. Node.js project
+    2. MCP server
+    3. MCP tools
+    4. Tool logic
+    5. API/database connections if needed
+
+Then the main Cursor-specific setup is:
+
+    mcp.json
+
+You tell Cursor:
+
+    "Here is my MCP application.
+     Start this file when you need the MCP."
+
+---
+
+# 14. Simple mental model
+
+Your project:
+
+    my-custom-mcp/
+       |
+       +-- src/index.ts
+              |
+              +-- MCP Server
+              |
+              +-- Tool 1
+              +-- Tool 2
+              +-- Tool 3
+
+Cursor:
+
+    mcp.json
+       |
+       +-- my-custom-mcp
+              |
+              +-- command
+              +-- path to index.ts
+
+Final connection:
+
+    Cursor
+       |
+       | starts
+       v
+    Node.js MCP application
+       |
+       +-- hello
+       +-- add
+       +-- your custom tools
+
+That is the basic setup you need for a local custom MCP project.
