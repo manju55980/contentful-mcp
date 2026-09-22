@@ -1,0 +1,47 @@
+{
+  "project_name": "Custom MCP Node.js Project",
+  "layout": "monorepo",
+  "framework": "next.js (client) + node.js (server)",
+  "generated_by": "AI Project Builder",
+  "generated_at": "2026-09-22T13:38:53.275Z",
+  "source_repository": "sjinnovation/base",
+  "module_count": 1,
+  "file_count": 26,
+  "routes": [
+    "/example"
+  ],
+  "modules": [
+    {
+      "id": "example-module",
+      "title": "Example Module (reference)",
+      "included_via_dependency": false,
+      "reason": "Provides a foundational boilerplate for a full-stack application, including a server-side project structure, which serves as the starting point for the custom Node.js MCP server.",
+      "adapted": true,
+      "env_vars": [
+        "EXAMPLE_MODULE_ENABLED",
+        "SUPABASE_URL",
+        "SUPABASE_SERVICE_ROLE_KEY"
+      ],
+      "db_tables": [
+        "example"
+      ],
+      "generated_files": [
+        "client/components/example/ExampleComponent.tsx",
+        "client/hooks/useExample.ts",
+        "client/lib/example/types.ts",
+        "client/lib/example/supabaseTypes.ts",
+        "client/app/example/page.tsx",
+        "server/routes/example/service.js",
+        "server/routes/example/index.js",
+        "server/routes/example/config.js",
+        "supabase/migrations/001_example.sql"
+      ]
+    }
+  ],
+  "common_env_vars": [
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "VITE_SUPABASE_URL",
+    "VITE_SUPABASE_ANON_KEY"
+  ]
+}
