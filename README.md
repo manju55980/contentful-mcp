@@ -1,336 +1,121 @@
-# Custom MCP Node.js Project
+# Contentful MCP Server
 
-A runnable **Node.js MCP server** that can be connected to AI clients such as **Cursor**.
+A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that lets AI coding tools (Cursor, Claude Code, and others) query entries from a Contentful space over stdio.
 
-The project is designed as a starting point for building a custom MCP (Model Context Protocol) server. The MCP server exposes custom tools that an AI client can discover and use.
+## Features
 
-## Project Structure
+- MCP server built with `@modelcontextprotocol/server`
+- Stdio transport for IDE / agent integration
+- Zod-validated tool inputs
+- Fetches live entries from the Contentful Content Delivery API (CDA)
 
-```text
-custom-mcp/
-├── client/              # Optional frontend application
-├── server/              # Node.js MCP server
-│   ├── src/
-│   │   ├── tools/       # Custom MCP tools
-│   │   ├── index.ts     # MCP server entry point
-│   │   └── ...
+## Tool
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `get_contentful_entries` | Returns entries from the configured Contentful space | `limit` (optional, 1–100, default `100`) |
+
+Each entry includes `id`, `contentType`, `createdAt`, `updatedAt`, and `fields`.
+
+## Project structure
+
+```
+contentful-mcp/
+├── server/
+│   ├── index.js       # MCP server entry point
 │   └── package.json
-├── supabase/            # Supabase migrations/functions if required
-├── .env.example
-├── .env.local
-├── package.json
+├── .env               # Local credentials (not committed)
+├── .gitignore
+├── package.json       # npm workspaces root
 └── README.md
 ```
 
-## Getting Started
+## Prerequisites
 
-Install dependencies from the project root:
+- Node.js 18+ (recommended)
+- A Contentful space with:
+  - **Space ID**
+  - **Content Delivery API (CDA) access token**
+
+## Setup
+
+1. Clone the repository and install dependencies from the project root:
 
 ```bash
 npm install
 ```
 
-Create the environment file:
-
-```bash
-cp .env.example .env.local
-```
-
-Add the required environment variables.
-
-### Start the Node.js MCP Server
-
-```bash
-npm run dev:server
-```
-
-The server will start locally according to the configured MCP transport.
-
-If the project also contains the Next.js client, run:
-
-```bash
-npm run dev
-```
-
-in a separate terminal.
-
-## MCP Server
-
-The main purpose of this project is the **custom Node.js MCP server**.
-
-The server contains custom tools that can be exposed to MCP-compatible clients.
-
-Example:
-
-```text
-AI Client
-   │
-   │ MCP
-   ▼
-Node.js MCP Server
-   │
-   ├── Custom Tool 1
-   ├── Custom Tool 2
-   └── Custom Tool 3
-```
-
-The AI client can discover the available tools and call them when needed.
-
-## Connecting to Cursor
-
-After creating and running the MCP server, it can be connected to **Cursor** using Cursor's MCP configuration.
-
-The project itself contains the MCP implementation.
-
-The **Cursor connection is a client-side configuration step**.
-
-Typical flow:
-
-```text
-1. Create / modify MCP project
-        ↓
-2. Install dependencies
-        ↓
-3. Run the Node.js MCP server
-        ↓
-4. Add the MCP server to Cursor
-        ↓
-5. Cursor discovers the available tools
-        ↓
-6. Use the tools from Cursor
-```
-
-The MCP configuration should point Cursor to this project's MCP server entry point or start command, depending on the transport used by the project.
-
-### Important
-
-The MCP server code should be maintained inside this project.
-
-Cursor configuration is only required to connect Cursor to the server.
-
-You do **not** need to manually recreate the MCP tools inside Cursor.
-
-## Creating a Custom MCP Tool
-
-Custom tools should be added inside the server's tool structure.
-
-For example:
-
-```text
-server/
-└── src/
-    └── tools/
-        ├── get-project-info.ts
-        ├── search-content.ts
-        └── create-ticket.ts
-```
-
-A tool should generally contain:
-
-```text
-Tool
- ├── name
- ├── description
- ├── input schema
- └── handler
-```
-
-For example, conceptually:
-
-```text
-search-content
-    ↓
-Input:
-    searchText
-
-    ↓
-Node.js handler
-
-    ↓
-Contentful / API / Database
-
-    ↓
-Result returned to AI client
-```
-
-## Environment Variables
-
-Add required values to `.env.local`.
-
-Example:
+2. Create a `.env` file in the project root:
 
 ```env
-PORT=4000
-
-API_BASE_URL=http://localhost:4000
-
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+CONTENTFUL_SPACE_ID=your_space_id
+CONTENTFUL_ACCESS_TOKEN=your_cda_access_token
 ```
 
-Only add variables that are actually required by the tools implemented in the project.
-
-Do not commit `.env.local` or secret keys to Git.
-
-## Supabase
-
-Supabase is optional and should only be used when a custom MCP tool requires database functionality.
-
-Supabase migrations are located under:
-
-```text
-supabase/migrations/
-```
-
-Supabase Edge Functions, if required, are located under:
-
-```text
-supabase/functions/
-```
-
-Apply migrations to the configured Supabase project before using tools that depend on those tables.
-
-## Development Commands
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Run the frontend:
-
-```bash
-npm run dev
-```
-
-Run the Node.js MCP server:
+3. Start the MCP server:
 
 ```bash
 npm run dev:server
 ```
 
-Build the project:
+Or from the server workspace:
 
 ```bash
-npm run build
+npm run start --workspace=server
 ```
 
-## Adding More MCP Tools
+## Cursor MCP configuration
 
-When adding a new capability:
+Add the server to your Cursor MCP config (e.g. `.cursor/mcp.json` or your user MCP settings):
 
-```text
-1. Create the tool
-        ↓
-2. Define its input schema
-        ↓
-3. Implement the Node.js handler
-        ↓
-4. Register the tool with the MCP server
-        ↓
-5. Restart the MCP server
-        ↓
-6. Refresh/reconnect the MCP server in Cursor
-        ↓
-7. Test the tool from Cursor
+```json
+{
+  "mcpServers": {
+    "contentful-helper": {
+      "command": "node",
+      "args": ["path/to/contentful-mcp/server/index.js"],
+      "env": {
+        "CONTENTFUL_SPACE_ID": "your_space_id",
+        "CONTENTFUL_ACCESS_TOKEN": "your_cda_access_token"
+      }
+    }
+  }
+}
 ```
 
-Keep business logic inside the server rather than inside the Cursor configuration.
+Alternatively, keep credentials in the project `.env` (loaded by the server) and point `args` at `server/index.js` only.
 
-## Example Use Case
+After saving, restart Cursor (or reload MCP servers) and try prompts like:
 
-A custom Contentful MCP could expose tools such as:
+- “List all Contentful entries”
+- “Get Contentful entries with limit 10”
 
-```text
-Contentful MCP
-│
-├── search_entries
-├── get_entry
-├── get_content_type
-├── search_assets
-└── update_entry
-```
+## Environment variables
 
-Then Cursor could use those tools when the user asks:
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `CONTENTFUL_SPACE_ID` | Yes | Contentful space ID |
+| `CONTENTFUL_ACCESS_TOKEN` | Yes | Content Delivery API (CDA) token |
 
-```text
-"Find the Aveeno hero component for this page."
-```
+Do not commit `.env`. It is listed in `.gitignore`.
 
-Cursor:
+## Scripts
 
-```text
-AI
- ↓
-Contentful MCP
- ↓
-search_entries
- ↓
-Contentful
- ↓
-Result
- ↓
-AI response
-```
+| Script | Description |
+|--------|-------------|
+| `npm install` | Install root workspace dependencies |
+| `npm run dev:server` | Run the MCP server (`node server/index.js`) |
 
-## Architecture
+## How it works
 
-The overall architecture is:
+1. The server reads `CONTENTFUL_SPACE_ID` and `CONTENTFUL_ACCESS_TOKEN` from `.env`.
+2. It registers `get_contentful_entries` with the MCP runtime.
+3. On each tool call, it requests:
 
-```text
-                 ┌──────────────┐
-                 │    Cursor    │
-                 │   AI Client  │
-                 └──────┬───────┘
-                        │
-                       MCP
-                        │
-                        ▼
-              ┌──────────────────┐
-              │ Node.js MCP      │
-              │ Server           │
-              └────────┬─────────┘
-                       │
-          ┌────────────┼────────────┐
-          ▼            ▼            ▼
-      Custom Tools  Supabase    External APIs
-```
+   `https://cdn.contentful.com/spaces/{SPACE_ID}/entries?access_token=...&limit=...`
 
-## Important Notes
+4. Results are returned to the client as JSON text content over stdio.
 
-* This project is the **custom MCP implementation**.
-* Node.js contains the MCP server and its tools.
-* Cursor is an MCP client.
-* Cursor only needs to be configured to connect to the running MCP server.
-* New capabilities should be implemented as MCP tools in the Node.js project.
-* Keep API keys and secrets in environment variables.
-* Do not commit `.env.local`.
-* Restart or reconnect the MCP server after changing tool definitions.
+## License
 
-## Next Steps
-
-To create a new custom MCP:
-
-```text
-Create Node.js project
-        ↓
-Install MCP SDK
-        ↓
-Create MCP server
-        ↓
-Create custom tools
-        ↓
-Register tools
-        ↓
-Run server
-        ↓
-Connect server to Cursor
-        ↓
-Test tools
-```
-
-This project can then be extended with integrations such as **Contentful, Jira, Figma, Supabase, GitHub, or other APIs**.
+Private project (`"private": true` in `package.json`). Add a license file if you plan to open-source it.
