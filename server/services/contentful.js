@@ -1,7 +1,7 @@
 export async function fetchContentfulEntries({ spaceId, accessToken, limit }) {
-  const url =
-    `https://cdn.contentful.com/spaces/${spaceId}/entries` +
-    `?access_token=${encodeURIComponent(accessToken)}&limit=${limit}`;
+  const url = new URL(`https://cdn.contentful.com/spaces/${spaceId}/entries`);
+  url.searchParams.set('access_token', accessToken);
+  url.searchParams.set('limit', String(limit));
 
   const response = await fetch(url);
 

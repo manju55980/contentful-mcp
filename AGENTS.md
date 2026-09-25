@@ -48,3 +48,7 @@ Before making changes:
 ### Development Flow
 
 `SPEC → TASK → IMPLEMENT → VERIFY → NEXT TASK`
+
+### Code Quality & Simplicity
+
+Refer to `specs/doc/codeQualityAndSimplicity.md`.
